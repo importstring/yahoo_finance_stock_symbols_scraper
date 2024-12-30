@@ -53,12 +53,15 @@ async def process_block(session: aiohttp.ClientSession, search_term: str, block:
     try:
         body = await fetch_url(session, url)
         soup = BeautifulSoup(body, 'html.parser')
-        links = soup.find_all('a', href=lambda href: href and "/quote/" in href)
-        
-        for link in links:
-            symbol = link.get('data-symbol')
-            if symbol:
-                symbols.add(symbol)
+        table = soup.find('table', {'class': 'W(100%)'})
+        if table:
+            rows = table.find_all('tr')
+            for row in rows:
+                symbol_cell = row.find('td', {'aria-label': 'Symbol'})
+                if symbol_cell:
+                    symbol = symbol_cell.text.strip()
+                    if symbol:
+                        symbols.add(symbol)
     except Exception as e:
         logging.error(f"Error processing block {block} for {search_term}: {e}")
     
